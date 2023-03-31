@@ -3,13 +3,23 @@ import os
 import shutil
 import sys
 import ntpath
+import colorama
 
 from git import Repo
+
+colorama.init(autoreset=True)
 
 
 def await_action():
 	input('Press Enter to exit')
 
+
+def get_cache_dll_dir_path():
+	dir_path = os.path.normpath(os.path.join(os.getcwd(), 'dlls'))
+	if not os.path.isdir(dir_path):
+		os.mkdir(dir_path)
+
+	return dir_path
 
 def search_file(filename, directory):
 	res = []
@@ -51,6 +61,27 @@ def get_dll_pdb_pair(directory, dll_file_name):
 				dll_paths.append(os.path.normpath(os.path.join(dirpath, file_name)))
 
 
+def get_changed_dlls(directory_list):
+	for directory in directory_list:
+		print('Searching for dll inside {0}'.format(directory))
+
+		directory_path, dll = get_dll_directory(directory)
+
+		if directory_path is None or dll is None:
+			print(f'{colorama.Fore.RED}Failed to find bin directory at {0}'.format(directory))
+			await_action()
+			sys.exit(0)
+
+		print('Bin directory found at: {0}'.format(directory_path))
+
+		if dll in naming_exceptions:
+			dll = naming_exceptions[dll]
+
+		print('Target dll file: {0}'.format(dll))
+
+		get_dll_pdb_pair(directory_path + '\\bin', dll)
+
+
 config_file = open('config.json')
 config = json.load(config_file)
 
@@ -58,6 +89,11 @@ naming_exceptions = config['Exceptions']
 
 repository_path = config['RepositoryFilePath']
 destination_path = config['DestinationFilepath']
+
+read_from_dll_folder = config['ReadFromDllFolder']
+write_to_dll_folder = config['WriteCopiesToDllFolder']
+
+print(destination_path)
 
 repo = Repo(config['RepositoryFilePath'])
 changed_files = [item.a_path for item in repo.index.diff(None)]
@@ -75,24 +111,11 @@ print('List of init directories: ', dir_list)
 
 dll_paths = []
 
-for directory in dir_list:
-	print('Searching for dll inside {0}'.format(directory))
-
-	directory_path, dll = get_dll_directory(directory)
-
-	if directory_path is None or dll is None:
-		print('Failed to find bin directory at {0}'.format(directory))
-		await_action()
-		sys.exit(0)
-
-	print('Bin directory found at: {0}'.format(directory_path))
-
-	if dll in naming_exceptions:
-		dll = naming_exceptions[dll]
-
-	print('Target dll file: {0}'.format(dll))
-
-	get_dll_pdb_pair(directory_path + '\\bin', dll)
+if read_from_dll_folder:
+	for f in os.listdir(get_cache_dll_dir_path()):
+		dll_paths.append(os.path.normpath(os.path.join(get_cache_dll_dir_path(), f)))
+else:
+	get_changed_dlls(dir_list)
 
 dll_paths = list(dict.fromkeys(dll_paths))
 dlls = [x.split('\\')[-1] for x in dll_paths]
@@ -104,9 +127,15 @@ print('Dll found paths:')
 for path in dll_paths:
 	print(path)
 
-print('Dlls found:')
+print(f'\n{colorama.Fore.CYAN}Dlls found:')
 for dll in dlls:
-	print('Dll: {0}'.format(dll))
+	print(f'{colorama.Fore.CYAN}Dll: {dll}')
+
+if write_to_dll_folder:
+	cache_dll_folder = get_cache_dll_dir_path()
+	for dll_path in dll_paths:
+		if dll_path != cache_dll_folder:
+			shutil.copy(dll_path, cache_dll_folder)
 
 try:
 	for i in range(len(dll_paths)):
@@ -122,6 +151,6 @@ try:
 	await_action()
 
 except Exception as e:
-	print('Exception has occurred:', e)
+	print(f'{colorama.Fore.RED}Exception has occurred:', e)
 	await_action()
 
