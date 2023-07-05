@@ -136,6 +136,9 @@ if write_to_dll_folder:
 	for dll_path in dll_paths:
 		if dll_path != cache_dll_folder:
 			shutil.copy(dll_path, cache_dll_folder)
+	for pdb_path in pdb_paths:
+		if pdb_path != cache_dll_folder:
+			shutil.copy(pdb_path, cache_dll_folder)
 
 try:
 	for i in range(len(dll_paths)):
