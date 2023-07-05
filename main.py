@@ -11,7 +11,7 @@ colorama.init(autoreset=True)
 
 
 def await_action():
-	input('Press Enter to exit')
+	input('\nPress Enter to exit')
 
 
 def get_cache_dll_dir_path():
@@ -113,7 +113,8 @@ dll_paths = []
 
 if read_from_dll_folder:
 	for f in os.listdir(get_cache_dll_dir_path()):
-		dll_paths.append(os.path.normpath(os.path.join(get_cache_dll_dir_path(), f)))
+		if f.split('.')[-1] == 'dll':
+			dll_paths.append(os.path.normpath(os.path.join(get_cache_dll_dir_path(), f)))
 else:
 	get_changed_dlls(dir_list)
 
