@@ -1,8 +1,9 @@
 {
   "RepositoryFilePath": "C:\\Users\\user\\path\\repository",
-  "DestinationFilepath": "C:\\Users\\user\\path\\destination",
-  "ReadFromDllFolder": true,
+  "DestinationFilepath": ["C:\\Users\\user\\path\\destination", "C:\\Users\\user\\path\\destination2"],
+  "ReadFromDllFolder": false,
   "WriteCopiesToDllFolder": false,
+  "EnableDebug": true,
   "Exceptions": {
     "DllNameWithoutExtension": "DllNameWithoutExtensionNew"
   }

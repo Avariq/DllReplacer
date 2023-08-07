@@ -82,28 +82,34 @@ def get_changed_dlls(directory_list):
 		get_dll_pdb_pair(directory_path + '\\bin', dll)
 
 
+def print_debug(message):
+	if is_debug:
+		print(message)
+
+
 config_file = open('config.json')
 config = json.load(config_file)
 
 naming_exceptions = config['Exceptions']
 
 repository_path = config['RepositoryFilePath']
-destination_path = config['DestinationFilepath']
+destination_paths = config['DestinationFilepaths']
 
 read_from_dll_folder = config['ReadFromDllFolder']
 write_to_dll_folder = config['WriteCopiesToDllFolder']
 
-print(destination_path)
+is_debug = config['EnableDebug']
 
-repo = Repo(config['RepositoryFilePath'])
+repo = Repo(repository_path)
 changed_files = [item.a_path for item in repo.index.diff(None)]
 
 print('Changed files:')
 for file in changed_files:
 	print(file)
+
 print()
 print('Repository path: {0}'.format(repository_path))
-print('Destination path: {0}'.format(destination_path))
+print('Destination paths: {0}'.format(destination_paths))
 
 dir_list = [x.removesuffix(x.split('/')[-1]) for x in changed_files]
 
@@ -142,15 +148,18 @@ if write_to_dll_folder:
 			shutil.copy(pdb_path, cache_dll_folder)
 
 try:
-	for i in range(len(dll_paths)):
-		for dest in search_file(dlls[i], destination_path):
-			dest_clear = dest.removesuffix(dlls[i])
+	for destination_path in destination_paths:
+		print(f'{colorama.Fore.CYAN}Moving to: {destination_path}')
 
-			print('Moving {0} to {1}'.format(dll_paths[i], dest_clear + dlls[i]))
-			shutil.copy(dll_paths[i], dest_clear + dlls[i])
+		for i in range(len(dll_paths)):
+			for dest in search_file(dlls[i], destination_path):
+				dest_clear = dest.removesuffix(dlls[i])
 
-			print('Moving {0} to {1}'.format(pdb_paths[i], dest_clear + pdbs[i]))
-			shutil.copy(dll_paths[i], dest_clear + pdbs[i])
+				print_debug('Moving {0} to {1}'.format(dll_paths[i], dest_clear + dlls[i]))
+				shutil.copy(dll_paths[i], dest_clear + dlls[i])
+
+				print_debug('Moving {0} to {1}'.format(pdb_paths[i], dest_clear + pdbs[i]))
+				shutil.copy(dll_paths[i], dest_clear + pdbs[i])
 
 	await_action()
 
