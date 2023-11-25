@@ -5,8 +5,6 @@ import sys
 import ntpath
 import colorama
 
-from git import Repo
-
 colorama.init(autoreset=True)
 
 
@@ -99,21 +97,10 @@ read_from_dll_folder = config['ReadFromDllFolder']
 write_to_dll_folder = config['WriteCopiesToDllFolder']
 
 is_debug = config['EnableDebug']
-
-repo = Repo(repository_path)
-changed_files = [item.a_path for item in repo.index.diff(None)]
-
-print('Changed files:')
-for file in changed_files:
-	print(file)
-
+	
 print()
 print('Repository path: {0}'.format(repository_path))
 print('Destination paths: {0}'.format(destination_paths))
-
-dir_list = [x.removesuffix(x.split('/')[-1]) for x in changed_files]
-
-print('List of init directories: ', dir_list)
 
 dll_paths = []
 
@@ -122,6 +109,19 @@ if read_from_dll_folder:
 		if f.split('.')[-1] == 'dll':
 			dll_paths.append(os.path.normpath(os.path.join(get_cache_dll_dir_path(), f)))
 else:
+	from git import Repo
+	
+	repo = Repo(repository_path)
+	changed_files = [item.a_path for item in repo.index.diff(None)]
+
+	print('Changed files:')
+	for file in changed_files:
+		print(file)
+
+	dir_list = [x.removesuffix(x.split('/')[-1]) for x in changed_files]
+
+	print('List of init directories: ', dir_list)
+
 	get_changed_dlls(dir_list)
 
 dll_paths = list(dict.fromkeys(dll_paths))
